@@ -8,20 +8,26 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{{ route('home') }}">Beranda</a>
+                        <a class="nav-link active" aria-current="page" href="{{ route('home') }}">
+                            <i class="fa-solid fa-house me-1"></i>Beranda
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('map') }}">Peta</a>
+                        <a class="nav-link" href="{{ route('peta') }}">
+                            <i class="fa-solid fa-map-location-dot me-1"></i>Peta
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('tabel') }}">Tabel</a>
+                        <a class="nav-link" href="{{ route('tabel') }}">
+                            <i class="fa-solid fa-table me-1"></i>Tabel
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('tabel') }}">Tentang</a>
+                        <a class="nav-link" href="{{ route('tabel') }}">
+                            <i class="fa-solid fa-circle-info me-1"></i>Tentang
+                        </a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
-
-    

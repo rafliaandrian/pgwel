@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -10,12 +11,13 @@ return new class extends Migration
     {
         Schema::create('polylines', function (Blueprint $table) {
             $table->id();
-            $table->geometry('geom', 'LINESTRING', 4326);  // ⭐ ini yang bikin spatial
             $table->string('name');
             $table->string('description');
             $table->string('image')->nullable();
             $table->timestamps();
         });
+
+        DB::statement('ALTER TABLE polylines ADD COLUMN geom geometry(LineString, 4326)');
     }
 
     public function down(): void

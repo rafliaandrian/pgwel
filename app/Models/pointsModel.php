@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB; // ✅ Fix 1: Import DB facade
+use Illuminate\Support\Facades\DB;
 
 class PointsModel extends Model
 {
@@ -11,31 +11,36 @@ class PointsModel extends Model
     protected $guarded = ['id'];
 
     public function geojson_points()
-{
-    $points = self::select(DB::raw('id, ST_AsGeoJSON(geom) as geojson, name, description, image, created_at, updated_at'))->get();
+    {
+        // ST_AsGeoJSON konversi geometry PostGIS → GeoJSON string
+        $points = DB::select("
+            SELECT id, name, description, image, created_at, updated_at,
+                   ST_AsGeoJSON(geom) as geom
+            FROM points
+        ");
 
-    $geojson = [
-        'type' => 'FeatureCollection',
-        'features' => []
-    ];
-
-    foreach ($points as $point) {
-        $feature = [
-            'type' => 'Feature',
-            'geometry' => json_decode($point->geojson),
-            'properties' => [
-                'id' => $point->id,
-                'name' => $point->name,
-                'description' => $point->description,
-                'image' => $point->image,
-                'created_at' => $point->created_at,
-                'updated_at' => $point->updated_at
-            ]
+        $geojson = [
+            'type'     => 'FeatureCollection',
+            'features' => []
         ];
 
-        array_push($geojson['features'], $feature);
-    }
+        foreach ($points as $point) {
+            $geometry = json_decode($point->geom, true);
 
-    return $geojson;
+            $geojson['features'][] = [
+                'type'     => 'Feature',
+                'geometry' => $geometry,
+                'properties' => [
+                    'id'          => $point->id,
+                    'name'        => $point->name,
+                    'description' => $point->description,
+                    'image'       => $point->image,
+                    'created_at'  => $point->created_at,
+                    'updated_at'  => $point->updated_at,
+                ],
+            ];
+        }
+
+        return $geojson;
     }
 }

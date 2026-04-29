@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 
 class PointsController extends Controller
 {
-
     protected $points;
 
     public function __construct()
@@ -15,85 +14,91 @@ class PointsController extends Controller
         $this->points = new PointsModel();
     }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         //
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
+        // Validasi input
         $request->validate(
             [
                 'geometry_point' => 'required',
                 'name'           => 'required|string|max:255',
                 'description'    => 'required|string',
+                'image'          => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // ✅ 2048
             ],
             [
                 'geometry_point.required' => 'Field geometry point harus diisi.',
-                'name.required'           => 'Field name harus diisi.',
-                'name.string'             => 'Field name harus berupa string.',
-                'name.max'                => 'Field name tidak boleh lebih dari 255 karakter.',
-                'description.required'    => 'Field description harus diisi.',
-                'description.string'      => 'Field description harus berupa string.',
+                'name.required'           => 'Field nama harus diisi.',
+                'name.string'             => 'Field nama harus berupa string.',
+                'name.max'                => 'Field nama tidak boleh lebih dari 255 karakter.',
+                'description.required'    => 'Field deskripsi harus diisi.',
+                'description.string'      => 'Field deskripsi harus berupa string.',
+                'image.image'             => 'File harus berupa file gambar.',
+                'image.mimes'             => 'File gambar harus berupa file dengan ekstensi jpeg, png, atau jpg.',
+                'image.max'               => 'Ukuran file gambar tidak boleh lebih dari 2MB.',
             ]
         );
+
+        // Membuat direktori image apabila belum tersedia
+        if (!is_dir('storage/images')) {
+            mkdir('./storage/images', 0777);
+        }
+
+        // Simpan file image ke direktori storage/images
+        if ($request->hasFile('image')) {
+            $image      = $request->file('image');
+            $name_image = time() . "_point." . strtolower($image->getClientOriginalExtension());
+            $image->move('storage/images', $name_image);
+        } else {
+            $name_image = null;
+        }
 
         $data = [
             'geom'        => $request->geometry_point,
             'name'        => $request->name,
             'description' => $request->description,
+            'image'       => $name_image,
         ];
 
-        if (!$this->points->create($data)) {
-            return redirect()->route('map')->with('error', 'Gagal menyimpan Point.');
+        // Simpan data ke database
+        if (!$this->points->create($data)) { // ✅ pakai if-check bukan try-catch
+            return redirect()->route('peta')->with('error', 'Gagal menyimpan data point.');
         }
 
-        return redirect()->route('map')->with('success', 'Point berhasil disimpan.');
+        return redirect()->route('peta')->with('success', 'Data point berhasil disimpan.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         //
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         //
+    }
+
+    public function geojson()
+    {
+        $points = $this->points->geojson_points();
+        return response()->json($points);
     }
 }

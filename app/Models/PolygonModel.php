@@ -12,27 +12,32 @@ class PolygonModel extends Model
 
     public function geojson_polygons()
     {
-        $polygons = self::select(DB::raw('id, ST_AsGeoJSON(geom) as geojson, name, description, created_at, updated_at'))->get();
+        $polygons = DB::select("
+            SELECT id, name, description, image, created_at, updated_at,
+                   ST_AsGeoJSON(geom) as geom
+            FROM polygons
+        ");
 
         $geojson = [
-            'type' => 'FeatureCollection',
+            'type'     => 'FeatureCollection',
             'features' => []
         ];
 
         foreach ($polygons as $polygon) {
-            $feature = [
-                'type' => 'Feature',
-                'geometry' => json_decode($polygon->geojson),
-                'properties' => [
-                    'id' => $polygon->id,
-                    'name' => $polygon->name,
-                    'description' => $polygon->description,
-                    'created_at' => $polygon->created_at,
-                    'updated_at' => $polygon->updated_at
-                ]
-            ];
+            $geometry = json_decode($polygon->geom, true);
 
-            array_push($geojson['features'], $feature);
+            $geojson['features'][] = [
+                'type'     => 'Feature',
+                'geometry' => $geometry,
+                'properties' => [
+                    'id'          => $polygon->id,
+                    'name'        => $polygon->name,
+                    'description' => $polygon->description,
+                    'image'       => $polygon->image,
+                    'created_at'  => $polygon->created_at,
+                    'updated_at'  => $polygon->updated_at,
+                ],
+            ];
         }
 
         return $geojson;
