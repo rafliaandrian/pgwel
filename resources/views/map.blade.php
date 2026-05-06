@@ -253,6 +253,8 @@
 
             // onEachFeature
             onEachFeature: function(feature, layer) {
+                // variable route delete
+                var routedelete = "{{ route('points.delete', ':id') }}"; routedelete = routedelete.replace(':id', feature.properties.id);
                 // variable popup content
                 var popup_content = "Nama: " + feature.properties.name + "<br>" +
                     "Deskripsi: " + feature.properties.description + "<br>" +
@@ -261,7 +263,10 @@
 
                 if (feature.properties.image) {
                     popup_content += "<br><img src='{{ asset('storage/images/') }}/" + feature.properties.image +
-                        "' alt='' class='img-thumbnail' width='300'>";
+                        "' alt='' class='img-thumbnail' width='300'>" + "<br>" + "<form action='" + routedelete + "' method='post'>" + '@csrf' + '@method("delete")' + "<button type='submit' class='btn btn-sm btn-danger' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus point ini?\")'>" +
+    "<i class='fa-solid fa-trash'></i>" +
+"</button>" +
+"</form>"
                 }
                 layer.on({
                     click: function(e) {
@@ -282,6 +287,8 @@
 
             // onEachFeature
             onEachFeature: function(feature, layer) {
+                // variable route delete
+                var routedelete = "{{ route('polylines.delete', ':id') }}"; routedelete = routedelete.replace(':id', feature.properties.id);
                 // variable popup content
                 var popup_content = "Nama: " + feature.properties.name + "<br>" +
                     "Deskripsi: " + feature.properties.description + "<br>" +
@@ -290,7 +297,15 @@
 
                 if (feature.properties.image) {
                     popup_content += "<br><img src='{{ asset('storage/images/') }}/" + feature.properties.image +
-                        "' alt='' class='img-thumbnail' width='300'>";
+                        "' alt='' class='img-thumbnail' width='300'>" + "<br>" + "<form action='" + routedelete + "' method='post'>" + '@csrf' + '@method("delete")' + "<button type='submit' class='btn btn-sm btn-danger' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus polyline ini?\")'>" +
+    "<i class='fa-solid fa-trash'></i>" +
+"</button>" +
+"</form>"
+                } else {
+                    popup_content += "<br>" + "<form action='" + routedelete + "' method='post'>" + '@csrf' + '@method("delete")' + "<button type='submit' class='btn btn-sm btn-danger' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus polyline ini?\")'>" +
+    "<i class='fa-solid fa-trash'></i>" +
+"</button>" +
+"</form>"
                 }
 
                 layer.on({
@@ -312,6 +327,8 @@
 
             // onEachFeature
             onEachFeature: function(feature, layer) {
+                // variable route delete
+                var routedelete = "{{ route('polygons.delete', ':id') }}"; routedelete = routedelete.replace(':id', feature.properties.id);
                 // variable popup content
                 var popup_content = "Nama: " + feature.properties.name + "<br>" +
                     "Deskripsi: " + feature.properties.description + "<br>" +
@@ -320,7 +337,15 @@
 
                 if (feature.properties.image) {
                     popup_content += "<br><img src='{{ asset('storage/images/') }}/" + feature.properties.image +
-                        "' alt='' class='img-thumbnail' width='300'>";
+                        "' alt='' class='img-thumbnail' width='300'>" + "<br>" + "<form action='" + routedelete + "' method='post'>" + '@csrf' + '@method("delete")' + "<button type='submit' class='btn btn-sm btn-danger' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus polygon ini?\")'>" +
+    "<i class='fa-solid fa-trash'></i>" +
+"</button>" +
+"</form>"
+                } else {
+                    popup_content += "<br>" + "<form action='" + routedelete + "' method='post'>" + '@csrf' + '@method("delete")' + "<button type='submit' class='btn btn-sm btn-danger' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus polygon ini?\")'>" +
+    "<i class='fa-solid fa-trash'></i>" +
+"</button>" +
+"</form>"
                 }
 
                 layer.on({

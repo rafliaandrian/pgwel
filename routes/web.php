@@ -19,13 +19,16 @@ Route::view('dashboard', 'dashboard')
 Route::get('/table', [PageController::class, 'table'])->name('tabel');
 
 // Store routes
-Route::post('/points',           [PointsController::class,   'store'])->name('points.store');
-Route::post('/store-polylines',  [PolylinesController::class, 'store'])->name('polylines.store');
-Route::post('/store-polygon',    [PolygonController::class,   'store'])->name('polygon.store');
+Route::post('/points', [PointsController::class,   'store'])->name('points.store');
+Route::delete('/delete-points/{id}', [PointsController::class,   'destroy'])->name('points.delete');
+Route::post('/store-polylines', [PolylinesController::class, 'store'])->name('polylines.store');
+Route::delete('/delete-polylines/{id}', [PolylinesController::class, 'destroy'])->name('polylines.delete');
+Route::post('/store-polygon', [PolygonController::class,   'store'])->name('polygon.store');
+Route::delete('/delete-polygons/{id}', [PolygonController::class,   'destroy'])->name('polygons.delete');
 
 // GeoJSON routes
-Route::get('/geojson-points',    [PointsController::class,   'geojson'])->name('geojson_points');
+Route::get('/geojson-points', [PointsController::class,   'geojson'])->name('geojson_points');
 Route::get('/geojson-polylines', [PolylinesController::class, 'geojson'])->name('geojson_polylines');
-Route::get('/geojson-polygons',  [PolygonController::class,   'geojson'])->name('geojson_polygons');
+Route::get('/geojson-polygons', [PolygonController::class,   'geojson'])->name('geojson_polygons');
 
 require __DIR__.'/settings.php';
