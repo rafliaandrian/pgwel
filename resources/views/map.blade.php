@@ -34,11 +34,14 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Input Point</h5>
+                    <h5 class="modal-title" id="modalPointTitle">Input Point</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="{{ route('points.store') }}" method="post" enctype="multipart/form-data">
+                <form id="pointForm" action="{{ route('points.store') }}" method="post" enctype="multipart/form-data">
                 @csrf
+                @method('POST')
+                    <input type="hidden" name="_method" id="pointMethod" value="POST">
+                    <input type="hidden" name="point_id" id="pointId">
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="name" class="form-label">Name</label>
@@ -63,7 +66,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="submit" class="btn btn-primary" id="pointSubmitBtn">Save</button>
                     </div>
                 </form>
             </div>
@@ -195,53 +198,26 @@
             var type = e.layerType,
                 layer = e.layer;
 
-            console.log(type);
-
             var drawnJSONObject = layer.toGeoJSON();
             var objectGeometry = JSON.stringify(drawnJSONObject.geometry);
 
-            console.log(drawnJSONObject);
-            console.log(objectGeometry);
-
             if (type === 'polyline') {
-                //Set Value Geometry Polyline To Modal Form Input
+                // Set Value Geometry Polyline To Modal Form Input (GeoJSON geometry)
                 $('#geometry_polyline').val(objectGeometry);
-
-                //Show Modal Form Input
                 $('#modalInputPolyline').modal('show');
-
-                // Modal dismiss reload page
-                $('#modalInputPolyline').on('hidden.bs.modal', function () {
-                    location.reload();
-                });
+                $('#modalInputPolyline').on('hidden.bs.modal', function () { location.reload(); });
 
             } else if (type === 'polygon' || type === 'rectangle') {
-
-                //Set Value Geometry Polygon To Modal Form Input
+                // Set Value Geometry Polygon To Modal Form Input
                 $('#geometry_polygon').val(objectGeometry);
-
-                //Show Modal Form Input
                 $('#modalInputPolygon').modal('show');
-
-                // Modal dismiss reload page
-                $('#modalInputPolygon').on('hidden.bs.modal', function () {
-                    location.reload();
-                });
+                $('#modalInputPolygon').on('hidden.bs.modal', function () { location.reload(); });
 
             } else if (type === 'marker') {
-
-                //Set Value Geometry Point To Modal Form Input
+                // Set Value Geometry Point To Modal Form Input
                 $('#geometry_point').val(objectGeometry);
-
-                //Show Modal Form Input
                 $('#modalInputPoint').modal('show');
-
-                // Modal dismiss reload page
-                $('#modalInputPoint').on('hidden.bs.modal', function () {
-                    location.reload();
-                });
-            } else {
-                console.log('__undefined__');
+                $('#modalInputPoint').on('hidden.bs.modal', function () { location.reload(); });
             }
 
             drawnItems.addLayer(layer);
@@ -255,6 +231,7 @@
             onEachFeature: function(feature, layer) {
                 // variable route delete
                 var routedelete = "{{ route('points.delete', ':id') }}"; routedelete = routedelete.replace(':id', feature.properties.id);
+                var routeedit = "{{ route('points.edit', ':id') }}"; routeedit = routeedit.replace(':id', feature.properties.id);
                 // variable popup content
                 var popup_content = "Nama: " + feature.properties.name + "<br>" +
                     "Deskripsi: " + feature.properties.description + "<br>" +
@@ -263,15 +240,30 @@
 
                 if (feature.properties.image) {
                     popup_content += "<br><img src='{{ asset('storage/images/') }}/" + feature.properties.image +
-                        "' alt='' class='img-thumbnail' width='300'>" + "<br>" + "<form action='" + routedelete + "' method='post'>" + '@csrf' + '@method("delete")' + "<button type='submit' class='btn btn-sm btn-danger' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus point ini?\")'>" +
-    "<i class='fa-solid fa-trash'></i>" +
-"</button>" +
-"</form>"
+                        "' alt='' class='img-thumbnail' width='300'>" +
+                        "<br><div class='d-flex gap-2 flex-wrap align-items-start'>" +
+                            "<form action='" + routedelete + "' method='post' class='m-0'>" +
+                                '@csrf' + '@method("delete")' +
+                                "<button type='submit' class='btn btn-sm btn-danger w-100' title='Delete Point' onclick='return confirm(\"Apakah Anda yakin ingin menghapus point ini?\")'>" +
+                                    "<i class='fa-solid fa-trash'></i> Delete</button>" +
+                            "</form>" +
+                            "<a href='" + routeedit + "' class='btn btn-sm btn-warning text-white w-100'>" +
+                                "<i class='fas fa-edit'></i> Edit</a>" +
+                        "</div>";
+
+                } else {
+                    popup_content += "<br><div class='d-flex gap-2 flex-wrap align-items-start'>" +
+                        "<form action='" + routedelete + "' method='post' class='m-0'>" +
+                            '@csrf' + '@method("delete")' +
+                            "<button type='submit' class='btn btn-sm btn-danger w-100' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus point ini?\")'>" +
+                                "<i class='fa-solid fa-trash'></i> Delete</button>" +
+                        "</form>" +
+                        "<a href='" + routeedit + "' class='btn btn-sm btn-warning text-white w-100'>" +
+                            "<i class='fa-solid fa-pen-to-square'></i> Edit</a>" +
+                    "</div>";
                 }
-                layer.on({
-                    click: function(e) {
-                        points.bindPopup(popup_content);
-                    },
+                layer.on('click', function(e) {
+                    layer.bindPopup(popup_content).openPopup();
                 });
             },
 
@@ -287,8 +279,9 @@
 
             // onEachFeature
             onEachFeature: function(feature, layer) {
-                // variable route delete
+                // variable route delete & edit
                 var routedelete = "{{ route('polylines.delete', ':id') }}"; routedelete = routedelete.replace(':id', feature.properties.id);
+                var routeedit = "{{ route('polylines.edit', ':id') }}"; routeedit = routeedit.replace(':id', feature.properties.id);
                 // variable popup content
                 var popup_content = "Nama: " + feature.properties.name + "<br>" +
                     "Deskripsi: " + feature.properties.description + "<br>" +
@@ -297,21 +290,28 @@
 
                 if (feature.properties.image) {
                     popup_content += "<br><img src='{{ asset('storage/images/') }}/" + feature.properties.image +
-                        "' alt='' class='img-thumbnail' width='300'>" + "<br>" + "<form action='" + routedelete + "' method='post'>" + '@csrf' + '@method("delete")' + "<button type='submit' class='btn btn-sm btn-danger' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus polyline ini?\")'>" +
-    "<i class='fa-solid fa-trash'></i>" +
-"</button>" +
-"</form>"
+                        "' alt='' class='img-thumbnail' width='300'>" + "<br><div class='d-flex gap-2 flex-wrap align-items-start'>" +
+                            "<form action='" + routedelete + "' method='post' class='m-0'>" + '@csrf' + '@method("delete")' +
+                                "<button type='submit' class='btn btn-sm btn-danger w-100' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus polyline ini?\")'>" +
+                                    "<i class='fa-solid fa-trash'></i>" + "</button>" +
+                            "</form>" +
+                            "<a href='" + routeedit + "' class='btn btn-sm btn-warning text-white w-100'>" +
+                                "<i class='fas fa-edit'></i> Edit</a>" +
+                        "</div>";
+
                 } else {
-                    popup_content += "<br>" + "<form action='" + routedelete + "' method='post'>" + '@csrf' + '@method("delete")' + "<button type='submit' class='btn btn-sm btn-danger' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus polyline ini?\")'>" +
-    "<i class='fa-solid fa-trash'></i>" +
-"</button>" +
-"</form>"
+                    popup_content += "<br><div class='d-flex gap-2 flex-wrap align-items-start'>" +
+                        "<form action='" + routedelete + "' method='post' class='m-0'>" + '@csrf' + '@method("delete")' +
+                            "<button type='submit' class='btn btn-sm btn-danger w-100' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus polyline ini?\")'>" +
+                                "<i class='fa-solid fa-trash'></i> Delete</button>" +
+                        "</form>" +
+                        "<a href='" + routeedit + "' class='btn btn-sm btn-warning text-white w-100'>" +
+                            "<i class='fas fa-edit'></i> Edit</a>" +
+                    "</div>";
                 }
 
-                layer.on({
-                    click: function(e) {
-                        polylines.bindPopup(popup_content);
-                    },
+                layer.on('click', function(e) {
+                    layer.bindPopup(popup_content).openPopup();
                 });
             },
 
@@ -335,23 +335,29 @@
                     "Dibuat: " + feature.properties.created_at + "<br>" +
                     "Diperbarui: " + feature.properties.updated_at;
 
+                var routeedit = "{{ route('polygons.edit', ':id') }}"; routeedit = routeedit.replace(':id', feature.properties.id);
+
                 if (feature.properties.image) {
                     popup_content += "<br><img src='{{ asset('storage/images/') }}/" + feature.properties.image +
-                        "' alt='' class='img-thumbnail' width='300'>" + "<br>" + "<form action='" + routedelete + "' method='post'>" + '@csrf' + '@method("delete")' + "<button type='submit' class='btn btn-sm btn-danger' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus polygon ini?\")'>" +
-    "<i class='fa-solid fa-trash'></i>" +
-"</button>" +
-"</form>"
+                        "' alt='' class='img-thumbnail' width='300'>" + "<br><div class='d-flex gap-2 flex-wrap align-items-start'>" +
+                            "<form action='" + routedelete + "' method='post' class='m-0'>" + '@csrf' + '@method("delete")' + "<button type='submit' class='btn btn-sm btn-danger w-100' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus polygon ini?\")'>" +
+                                "<i class='fa-solid fa-trash'></i> Delete</button>" +
+                            "</form>" +
+                            "<a href='" + routeedit + "' class='btn btn-sm btn-warning text-white w-100'>" +
+                                "<i class='fas fa-edit'></i> Edit</a>" +
+                        "</div>";
                 } else {
-                    popup_content += "<br>" + "<form action='" + routedelete + "' method='post'>" + '@csrf' + '@method("delete")' + "<button type='submit' class='btn btn-sm btn-danger' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus polygon ini?\")'>" +
-    "<i class='fa-solid fa-trash'></i>" +
-"</button>" +
-"</form>"
+                    popup_content += "<br><div class='d-flex gap-2 flex-wrap align-items-start'>" +
+                        "<form action='" + routedelete + "' method='post' class='m-0'>" + '@csrf' + '@method("delete")' + "<button type='submit' class='btn btn-sm btn-danger w-100' title='Delete Feature' onclick='return confirm(\"Apakah Anda yakin ingin menghapus polygon ini?\")'>" +
+                            "<i class='fa-solid fa-trash'></i> Delete</button>" +
+                        "</form>" +
+                        "<a href='" + routeedit + "' class='btn btn-sm btn-warning text-white w-100'>" +
+                            "<i class='fas fa-edit'></i> Edit</a>" +
+                    "</div>";
                 }
 
-                layer.on({
-                    click: function(e) {
-                        polygons.bindPopup(popup_content);
-                    },
+                layer.on('click', function(e) {
+                    layer.bindPopup(popup_content).openPopup();
                 });
             },
 

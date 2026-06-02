@@ -62,7 +62,7 @@ class PolylinesController extends Controller
         }
 
         $data = [
-            'geom' => $request->geometry_polyline,
+            'geom' => \DB::raw("ST_GeomFromGeoJSON('{$request->geometry_polyline}')"),
             'name' => $request->name,
             'description' => $request->description,
             'image' => $name_image,
@@ -83,12 +83,82 @@ class PolylinesController extends Controller
 
     public function edit(string $id)
     {
-        //
+        $polyline = $this->polylines->find($id);
+        if (! $polyline) {
+            return redirect()->route('peta')->with('error', 'Polyline tidak ditemukan.');
+        }
+
+        $geojsonRaw = \DB::select('SELECT ST_AsGeoJSON(geom) AS geojson FROM polylines WHERE id = ?', [$id])[0]->geojson ?? null;
+        $geojson = $geojsonRaw ? json_decode($geojsonRaw, true) : null;
+
+        return view('map.edit.polylines', [
+            'title' => 'Edit Polyline',
+            'polyline' => $polyline,
+            'geojson' => $geojson,
+            'id' => $id,
+        ]);
     }
 
     public function update(Request $request, string $id)
     {
-        //
+        // Validasi input
+        $request->validate(
+            [
+                'geometry_polyline' => 'nullable|string',
+                'name' => 'required|string|max:255',
+                'description' => 'required|string',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            ],
+            [
+                'name.required' => 'Field nama harus diisi.',
+                'name.string' => 'Field nama harus berupa string.',
+                'name.max' => 'Field nama tidak boleh lebih dari 255 karakter.',
+                'description.required' => 'Field deskripsi harus diisi.',
+                'description.string' => 'Field deskripsi harus berupa string.',
+                'image.image' => 'File harus berupa file gambar.',
+                'image.mimes' => 'File gambar harus berupa file dengan ekstensi jpeg, png, atau jpg.',
+                'image.max' => 'Ukuran file gambar tidak boleh lebih dari 2MB.',
+            ]
+        );
+
+        $polyline = $this->polylines->find($id);
+        if (! $polyline) {
+            return redirect()->route('peta')->with('error', 'Polyline tidak ditemukan.');
+        }
+
+        // Membuat direktori image apabila belum tersedia
+        if (! is_dir('storage/images')) {
+            mkdir('./storage/images', 0777);
+        }
+
+        // Simpan file image ke direktori storage/images jika ada
+        if ($request->hasFile('image')) {
+            if ($polyline->image && file_exists('./storage/images/'.$polyline->image)) {
+                unlink('./storage/images/'.$polyline->image);
+            }
+
+            $image = $request->file('image');
+            $name_image = time().'_polyline.'.strtolower($image->getClientOriginalExtension());
+            $image->move('storage/images', $name_image);
+        } else {
+            $name_image = $polyline->image;
+        }
+
+        $data = [
+            'name' => $request->name,
+            'description' => $request->description,
+            'image' => $name_image,
+        ];
+
+        if ($request->filled('geometry_polyline')) {
+            $data['geom'] = \DB::raw("ST_GeomFromGeoJSON('{$request->geometry_polyline}')");
+        }
+
+        if (! $polyline->update($data)) {
+            return redirect()->route('peta')->with('error', 'Gagal mengupdate data polyline.');
+        }
+
+        return redirect()->route('peta')->with('success', 'Data polyline berhasil diupdate.');
     }
 
     public function destroy(string $id)

@@ -62,14 +62,14 @@ class PolygonController extends Controller
         }
 
         $data = [
-            'geom' => $request->geometry_polygon,
+            'geom' => \DB::raw("ST_GeomFromGeoJSON('{$request->geometry_polygon}')"),
             'name' => $request->name,
             'description' => $request->description,
             'image' => $name_image,
         ];
 
         // Simpan data ke database
-        if (! $this->polygons->create($data)) { // ✅ if-check
+        if (! $this->polygons->create($data)) {
             return redirect()->route('peta')->with('error', 'Gagal menyimpan data polygon.');
         }
 
@@ -83,12 +83,79 @@ class PolygonController extends Controller
 
     public function edit(string $id)
     {
-        //
+        $polygon = $this->polygons->find($id);
+        if (! $polygon) {
+            return redirect()->route('peta')->with('error', 'Polygon tidak ditemukan.');
+        }
+
+        $geojsonRaw = \DB::select('SELECT ST_AsGeoJSON(geom) AS geojson FROM polygons WHERE id = ?', [$id])[0]->geojson ?? null;
+        $geojson = $geojsonRaw ? json_decode($geojsonRaw, true) : null;
+
+        return view('map.edit.polygon', [
+            'title' => 'Edit Polygon',
+            'polygon' => $polygon,
+            'geojson' => $geojson,
+            'id' => $id,
+        ]);
     }
 
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate(
+            [
+                'geometry_polygon' => 'nullable|string',
+                'name' => 'required|string|max:255',
+                'description' => 'required|string',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            ],
+            [
+                'name.required' => 'Field nama harus diisi.',
+                'name.string' => 'Field nama harus berupa string.',
+                'name.max' => 'Field nama tidak boleh lebih dari 255 karakter.',
+                'description.required' => 'Field deskripsi harus diisi.',
+                'description.string' => 'Field deskripsi harus berupa string.',
+                'image.image' => 'File harus berupa file gambar.',
+                'image.mimes' => 'File gambar harus berupa file dengan ekstensi jpeg, png, atau jpg.',
+                'image.max' => 'Ukuran file gambar tidak boleh lebih dari 2MB.',
+            ]
+        );
+
+        $polygon = $this->polygons->find($id);
+        if (! $polygon) {
+            return redirect()->route('peta')->with('error', 'Polygon tidak ditemukan.');
+        }
+
+        if (! is_dir('storage/images')) {
+            mkdir('./storage/images', 0777);
+        }
+
+        if ($request->hasFile('image')) {
+            if ($polygon->image && file_exists('./storage/images/'.$polygon->image)) {
+                unlink('./storage/images/'.$polygon->image);
+            }
+
+            $image = $request->file('image');
+            $name_image = time().'_polygon.'.strtolower($image->getClientOriginalExtension());
+            $image->move('storage/images', $name_image);
+        } else {
+            $name_image = $polygon->image;
+        }
+
+        $data = [
+            'name' => $request->name,
+            'description' => $request->description,
+            'image' => $name_image,
+        ];
+
+        if ($request->filled('geometry_polygon')) {
+            $data['geom'] = \DB::raw("ST_GeomFromGeoJSON('{$request->geometry_polygon}')");
+        }
+
+        if (! $polygon->update($data)) {
+            return redirect()->route('peta')->with('error', 'Gagal mengupdate data polygon.');
+        }
+
+        return redirect()->route('peta')->with('success', 'Data polygon berhasil diupdate.');
     }
 
     public function destroy(string $id)

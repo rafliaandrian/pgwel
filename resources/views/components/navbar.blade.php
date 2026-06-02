@@ -27,6 +27,24 @@
                             <i class="fa-solid fa-circle-info me-1"></i>Tentang
                         </a>
                     </li>
+                    @guest
+                    <li class="nav-item ms-2">
+    <a class="btn btn-primary rounded-pill px-3" href="{{ route('login') }}">
+        <i class="fa-solid fa-user me-1"></i>
+        Login
+    </a>
+</li>
+                    @endguest
+                    @auth
+                    <li class="nav-item ms-2">
+                        <form action="{{ route('logout') }}" method="post">
+                            @csrf
+                            <button type="submit" class="btn btn-danger rounded-pill px-3">
+                                <i class="fa-solid fa-right-from-bracket me-1"></i>
+                                Logout
+                            </button>
+                        </form>
+                    @endauth
                 </ul>
             </div>
         </div>

@@ -1,6 +1,7 @@
 @extends('layouts.template')
 
 @section('styles')
+<link rel="stylesheet" href="https://cdn.datatables.net/2.3.8/css/dataTables.dataTables.css">
     <style>
         body {
             margin: 0;
@@ -16,56 +17,104 @@
         </div>
     </div>
     <div class="card-body">
-        <table class="table table-bordered table-striped">
+        <table class="table table-bordered table-striped" id="tabeldatapoints">
             <thead>
                 <tr>
                     <th>No</th>
                     <th>Nama</th>
-                    <th>Alamat</th>
                     <th>Deskripsi</th>
+                    <th>Foto</th>
+                    <th>Tanggal</th>
                 </tr>
             </thead>
             <tbody>
+                @foreach ($points as $p)
                 <tr>
-                    <td>1</td>
-                    <td>Stadion Kridosono</td>
-                    <td>-7.78781, 110.374296</td>
-                    <td>Kota Baru</td>
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $p->name }}</td>
+                    <td>{{ $p->description }}</td>
+                    <td><img src="{{ asset('storage/images/' . $p['image']) }}" alt="Foto" width="100"></td>
+                    <td>{{ $p->created_at->format('d M Y') }}</td>
                 </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h3>Tabel Data Polylines</h3>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-striped" id="tabeldatapolylines">
+            <thead>
                 <tr>
-                    <td>2</td>
-                    <td>Bandara Adisutjipto</td>
-                    <td>-7.794337, 110.427189</td>
-                    <td>Bandara Internasional</td>
+                    <th>No</th>
+                    <th>Nama</th>
+                    <th>Deskripsi</th>
+                    <th>Foto</th>
+                    <th>Tanggal</th>
                 </tr>
+            </thead>
+            <tbody>
+                @foreach ($polylines as $p)
                 <tr>
-                    <td>3</td>
-                    <td>Alun-alun Utara</td>
-                    <td>-7.803989, 110.364382</td>
-                    <td>Halaman depan kraton jogja</td>
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $p->name }}</td>
+                    <td>{{ $p->description }}</td>
+                    <td><img src="{{ asset('storage/images/' . $p['image']) }}" alt="Foto" width="100"></td>
+                    <td>{{ $p->created_at->format('d M Y') }}</td>
                 </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h3>Tabel Data Polygons</h3>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-striped" id="tabeldatapolygons">
+            <thead>
                 <tr>
-                    <td>4</td>
-                    <td>Mandala Krida</td>
-                    <td>-7.795931, 110.384316</td>
-                    <td>Stadion Bal-balan</td>
+                    <th>No</th>
+                    <th>Nama</th>
+                    <th>Deskripsi</th>
+                    <th>Foto</th>
+                    <th>Tanggal</th>
                 </tr>
+            </thead>
+            <tbody>
+                @foreach ($polygons as $p)
                 <tr>
-                    <td>5</td>
-                    <td>Gedung Pusat UGM</td>
-                    <td>-7.768272, 110.378373</td>
-                    <td>Kantor Pusat UGM</td>
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $p->name }}</td>
+                    <td>{{ $p->description }}</td>
+                    <td><img src="{{ asset('storage/images/' . $p['image']) }}" alt="Foto" width="100"></td>
+                    <td>{{ $p->created_at->format('d M Y') }}</td>
                 </tr>
-                <tr>
-                    <td>6</td>
-                    <td>Gembira Loka Zoo</td>
-                    <td>-7.806497, 110.396805</td>
-                    <td>Kebun Binatang</td>
-                </tr>
+                @endforeach
             </tbody>
         </table>
     </div>
 </div>
 @endsection
 
-
+@section('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+<script src="https://cdn.datatables.net/2.3.8/js/dataTables.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#tabeldatapoints').DataTable();
+        $('#tabeldatapolylines').DataTable();
+        $('#tabeldatapolygons').DataTable();
+    });
+</script>
+@endsection

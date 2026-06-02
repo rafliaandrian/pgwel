@@ -5,40 +5,69 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
-class PointsModel extends Model
+class pointsModel extends Model
 {
     protected $table = 'points';
+
     protected $guarded = ['id'];
 
     public function geojson_points()
     {
-        // ST_AsGeoJSON konversi geometry PostGIS → GeoJSON string
-        $points = DB::select("
-            SELECT id, name, description, image, created_at, updated_at,
-                   ST_AsGeoJSON(geom) as geom
-            FROM points
-        ");
+        $points = $this->select(DB::raw('id, ST_AsGeoJSON(geom) as geojson, name, description, image, created_at, updated_at'))->get();
 
         $geojson = [
-            'type'     => 'FeatureCollection',
-            'features' => []
+            'type' => 'FeatureCollection',
+            'features' => [],
         ];
 
-        foreach ($points as $point) {
-            $geometry = json_decode($point->geom, true);
-
-            $geojson['features'][] = [
-                'type'     => 'Feature',
-                'geometry' => $geometry,
+        // perulangan setiap titip dan buat fitur geojson
+        foreach ($points as $p) {
+            $feature = [
+                'type' => 'Feature',
+                'geometry' => json_decode($p->geojson),
                 'properties' => [
-                    'id'          => $point->id,
-                    'name'        => $point->name,
-                    'description' => $point->description,
-                    'image'       => $point->image,
-                    'created_at'  => $point->created_at,
-                    'updated_at'  => $point->updated_at,
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'description' => $p->description,
+                    'image' => $p->image,
+                    'created_at' => $p->created_at,
+                    'updated_at' => $p->updated_at,
                 ],
             ];
+
+            array_push($geojson['features'], $feature);
+        }
+
+        return $geojson;
+    }
+
+    public function geojson_point($id)
+    {
+        $points = $this->select(DB::raw('id, ST_AsGeoJSON(geom) as geojson, name, description, image, created_at, updated_at'))
+            ->where('id', $id)
+            ->get();
+
+        $geojson = [
+            'type' => 'FeatureCollection',
+            'features' => [],
+        ];
+
+        // perulangan setiap titip dan buat fitur geojson
+        foreach ($points as $p) {
+            $feature = [
+                'type' => 'Feature',
+                'geometry' => json_decode($p->geojson),
+                'properties' => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'description' => $p->description,
+                    'image' => $p->image,
+                    'created_at' => $p->created_at,
+                    'updated_at' => $p->updated_at,
+                ],
+            ];
+
+            array_push($geojson['features'], $feature);
         }
 
         return $geojson;
